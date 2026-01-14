@@ -14,12 +14,12 @@ class TestConfig:
 
     def __init__(self, _type:  str, _duration: int, _language: str, _wpm: int, _punctuation_toggle: bool =None, _numbers_toggle: bool =None)-> None:
 
-        if _type not in Test.test_type_list:
-            raise ValueError(f'Invalid test type. Choose from: {Test.test_type_list}')
-        elif _duration not in Test.duration_list:
-            raise ValueError(f'Invalid duration. Choose from: {Test.duration_list}')
-        elif _language not in Test.language_list:
-            raise ValueError(f'Invalid language. Choose from: {Test.language_list}')
+        if _type not in TestConfig.test_type_list:
+            raise ValueError(f'Invalid test type. Choose from: {TestConfig.test_type_list}')
+        elif _duration not in TestConfig.duration_list:
+            raise ValueError(f'Invalid duration. Choose from: {TestConfig.duration_list}')
+        elif _language not in TestConfig.language_list:
+            raise ValueError(f'Invalid language. Choose from: {TestConfig.language_list}')
         elif _wpm not in range(0,351):
             raise ValueError('Invalid WPM. Choose from between 0 and 350')
         elif _punctuation_toggle not in [True, False, None]:
