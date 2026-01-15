@@ -70,9 +70,6 @@ def auth():
 # checking logic for authentification
 def is_logged_in(driver_instance) -> bool:
     try:
-        # if the user is logged in from previous session,
-        # the website takes time to load so this is here for safety
-        t.sleep(5)
         btn_element = driver_instance.find_element(By.CSS_SELECTOR, '.textButton.view-account')
         return btn_element.is_displayed()
     except NoSuchElementException as e:
@@ -83,6 +80,8 @@ def is_logged_in(driver_instance) -> bool:
 def monkey_login(driver_instance):
     # login with my account on monkeytype.com website
 
+    # this has to be done using auth() later
+    # which will handle all the credential logic
     with open('creds.JSON', 'r') as f:
         creds = json.load(f)
     email = creds['email']
@@ -116,6 +115,13 @@ if __name__ == "__main__":
     chrome_options = Options()
     chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{PORT}")
     driver = webdriver.Chrome(options=chrome_options)
+
+    # this is a dynamic safety for element discovery. tells the bot: "If you don't see an element right away, don't crash."
+    # Unlike t.sleep(), this will not force a pause if the element is found immediately.
+    # It will keep looking for up to 10 seconds.
+    # If it finds the element in 1 second, it moves on immediately.
+    # It only waits the full 10 seconds if the element is truly missing. (throwing a NoSuchElementException).
+    driver.implicitly_wait(10)
 
     # Window Maximisation Check: is_maximised returns True if size and position pixels are within relevant buffer ranges
     if not is_maximised(driver):
