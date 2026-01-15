@@ -24,6 +24,7 @@ CENTER_Y = (pag.size().height / 2)
 # C:\Program Files\Google\Chrome\Application\chrome.exe = Dir Address
 # .\chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\selenium\chrome-profile"
 
+# Initializes a debug-mode chrome instance on provided port
 def session_init():
     # automation for chrome debug mode
     def is_port_open(port: int) -> bool:
@@ -38,6 +39,7 @@ def session_init():
             r"--user-data-dir=C:\selenium\chrome-profile"
         ])
 
+# Checks screen and browser Dimensions and returns a boolean
 def is_maximised(driver_instance: WebDriver) -> bool:
     # retrieve screen capacity (w pag) and browser dimensions (w selenium)
     screen_size = pag.size()
@@ -76,7 +78,7 @@ def is_logged_in(driver_instance) -> bool:
         print(f"error element not found")
         return False
 
-# login logic with credentials goes in here:
+# LogIn logic with credentials goes in here:
 def monkey_login(driver_instance):
     # login with my account on monkeytype.com website
 
@@ -87,14 +89,32 @@ def monkey_login(driver_instance):
     email = creds['email']
     password = creds['password']
 
-    # This is her just for now. will be entering the creds logic:
-    pag.click(CENTER_X-130,CENTER_Y)
-    restart_test()
-    # monkey_login Logic:
-    # 1. Locate Fields: Use driver.find_element(By.ID, '...') or By.NAME to find the email and password inputs.
-    # 2. Input Data: Use element.send_keys(email) and element.send_keys(password).
-    # 3. Submit: Find the "Sign In" button and use .click(), or simply send Keys.ENTER to the password field.
+    # Login action steps:
+    driver_instance.get(MONKEYTYPE_LOGIN_URL)
 
+    t.sleep(1)
+    # 1. Locate Fields: find email and password inputs with By.NAME and Sign In button with By.CLASS_NAME
+    email_field = driver_instance.find_element(By.NAME, 'current-email')
+    password_field = driver_instance.find_element(By.NAME, 'current-password')
+    sign_in_button = driver_instance.find_element(By.CLASS_NAME, 'signIn')
+
+    # 2. Input Data: with send_keys() method
+    t.sleep(1)
+    email_field.send_keys(email)
+    t.sleep(1)
+    password_field.send_keys(password)
+    t.sleep(1)
+
+    # 3. Submit: send Keys.ENTER from keyboard to the sign in
+    sign_in_button.send_keys(Keys.RETURN)
+    t.sleep(1)
+
+    # Navigation Check: redirect
+    if driver_instance.current_url != MONKEYTYPE_URL:
+        driver.get(MONKEYTYPE_URL)
+        print("Log In End: log in finished")
+    else:
+        pass
 
 # automatic blur remover from words canvas
 def remove_blur():
@@ -121,6 +141,8 @@ if __name__ == "__main__":
     # It will keep looking for up to 10 seconds.
     # If it finds the element in 1 second, it moves on immediately.
     # It only waits the full 10 seconds if the element is truly missing. (throwing a NoSuchElementException).
+    # this is for the is_logged_in element lookup.
+    # the login method still needs time.sleep() method to not trigger captcha
     driver.implicitly_wait(10)
 
     # Window Maximisation Check: is_maximised returns True if size and position pixels are within relevant buffer ranges
@@ -128,7 +150,7 @@ if __name__ == "__main__":
         driver.maximize_window()
         print("invoked maximize_window")
     else:
-        print("windows is already maximised")
+        print("window is already maximised")
 
     # Navigation Check: if the current url is monkeytype or not
     if driver.current_url != MONKEYTYPE_URL:
@@ -138,9 +160,10 @@ if __name__ == "__main__":
 
     # Phase 2: User Authentication - Log In with my account
     if not is_logged_in(driver):
+        print("Log In Start: logging in...")
         monkey_login(driver)
     else:
-        print("already logged in")
+        print("Log In Status: already logged in")
 
     # Phase X: Word handler/parser
     # word_container = driver.find_element(By.ID, "words")
