@@ -2,6 +2,8 @@ import pyautogui as pag
 import time as t
 import socket
 import subprocess
+import json
+from selenium.common import NoSuchElementException
 from configClass import TestConfig
 from selenium import webdriver
 from selenium.webdriver.ie.webdriver import WebDriver
@@ -15,6 +17,8 @@ MONKEYTYPE_URL: str = "https://monkeytype.com/"
 MONKEYTYPE_LOGIN_URL: str= "https://monkeytype.com/login"
 SIZE_PIXEL_BUFFER: int = 50
 POSITION_PIXEL_BUFFER: int = 12
+CENTER_X = (pag.size().width / 2)
+CENTER_Y = (pag.size().height / 2)
 
 # manual debug mode for chrome in Terminal
 # C:\Program Files\Google\Chrome\Application\chrome.exe = Dir Address
@@ -33,7 +37,6 @@ def session_init():
             f"--remote-debugging-port={PORT}",
             r"--user-data-dir=C:\selenium\chrome-profile"
         ])
-
 
 def is_maximised(driver_instance: WebDriver) -> bool:
     # retrieve screen capacity (w pag) and browser dimensions (w selenium)
@@ -64,32 +67,44 @@ def is_maximised(driver_instance: WebDriver) -> bool:
 def auth():
     pass
 
-# for now my account. for future creds.txt/json to login
-def monkey_login():
+# checking logic for authentification
+def is_logged_in(driver_instance) -> bool:
+    try:
+        # if the user is logged in from previous session,
+        # the website takes time to load so this is here for safety
+        t.sleep(5)
+        btn_element = driver_instance.find_element(By.CSS_SELECTOR, '.textButton.view-account')
+        return btn_element.is_displayed()
+    except NoSuchElementException as e:
+        print(f"error element not found")
+        return False
+
+# login logic with credentials goes in here:
+def monkey_login(driver_instance):
     # login with my account on monkeytype.com website
 
+    with open('creds.JSON', 'r') as f:
+        creds = json.load(f)
+    email = creds['email']
+    password = creds['password']
+
+    # This is her just for now. will be entering the creds logic:
+    pag.click(CENTER_X-130,CENTER_Y)
+    restart_test()
+    # monkey_login Logic:
+    # 1. Locate Fields: Use driver.find_element(By.ID, '...') or By.NAME to find the email and password inputs.
+    # 2. Input Data: Use element.send_keys(email) and element.send_keys(password).
+    # 3. Submit: Find the "Sign In" button and use .click(), or simply send Keys.ENTER to the password field.
 
 
-    pass
-
+# automatic blur remover from words canvas
 def remove_blur():
-    # automatic blur remover from words canvas
-    pass
+    pag.click(CENTER_X, CENTER_Y)
 
+# tab + enter keyboard input: resets the test canvas
 def restart_test():
-    # tab + enter keyboard input logic: which resets test canvas
     with pag.hold('tab'):
         pag.press('enter')
-
-# driver.maximize_window() # resizes window to the maximum available screen space
-# driver.fullscreen_window() # invokes fullscreen operation (like pressing F11)
-# driver.get("https://monkeytype.com/")
-# t.sleep(2) # needs to sleep after refresh (driver.get method)
-# word_container = driver.find_element(By.ID, "words")
-# word_elements = word_container.find_elements(By.CLASS_NAME, "word")
-#
-# for w in word_elements:
-#     print(f"word: {w.text.lower()} + index: {word_elements.index(w)}")
 
 
 if __name__ == "__main__":
@@ -116,4 +131,14 @@ if __name__ == "__main__":
         pass
 
     # Phase 2: User Authentication - Log In with my account
-    monkey_login()
+    if not is_logged_in(driver):
+        monkey_login(driver)
+    else:
+        print("already logged in")
+
+    # Phase X: Word handler/parser
+    # word_container = driver.find_element(By.ID, "words")
+    # word_elements = word_container.find_elements(By.CLASS_NAME, "word")
+    #
+    # for w in word_elements:
+    #     print(f"word: {w.text.lower()} + index: {word_elements.index(w)}")

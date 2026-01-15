@@ -1,7 +1,7 @@
 import FreeSimpleGUI as fsg
+from bot import session_init
 
-
-running: bool = True
+# running: bool = True
 
 # crash/stop the program/instance/process manually
 # and return error catches as logs in the debug popup menu
@@ -18,13 +18,19 @@ if __name__ == "__main__":
     layout = [
         [fsg.Text('Browser Instance:'), fsg.Text('Chrome Instance')],
         [fsg.Button("Launch")],
-        [fsg.Button("Exit")]
+        [fsg.Button("Close")],
     ]
 
-    window = fsg.Window('Test Window', layout)
-    event, values = window.read()
-    if event == fsg.WINDOW_CLOSED:
-        print('You pressed', values[0])
+    window = fsg.Window('Browser Instance', layout)
+    while True:
+        event, values = window.read()
+        if event == fsg.WIN_CLOSED or event == 'Close':
+            break
+        elif event == 'Launch':
+            window.perform_long_operation(session_init(), '-BOT-FINISHED-')
+        elif event == '-BOT-FINISHED-':
+            fsg.popup('Browser Instance Closed')
+    window.close()
 
     # while running:
     #     event, values = window.read()
