@@ -20,7 +20,7 @@ POSITION_PIXEL_BUFFER: int = 12
 CENTER_X = (pag.size().width / 2)
 CENTER_Y = (pag.size().height / 2)
 TEST = TestConfig('time', 30, 'english 1k',100)
-
+TEST_TEMP = TestConfig('words', 100, 'english',80, True,True )
 # manual debug mode for chrome in Terminal
 # C:\Program Files\Google\Chrome\Application\chrome.exe = Dir Address
 # .\chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\selenium\chrome-profile"
@@ -72,30 +72,55 @@ def auth():
 
 # checking logic for authentification
 def is_logged_in(driver_instance: WebDriver) -> bool:
+    # old method which worked but apparently doesn't anymore
+    # try:
+    #     btn_element = driver_instance.find_element(By.CSS_SELECTOR, '.textButton.view-account')
+    #     return btn_element.is_displayed()
+    # except NoSuchElementException as e:
+    #     print(f"error element not found")
+    #     return False
+
+    # New method:
+    t.sleep(1)
     try:
-        btn_element = driver_instance.find_element(By.CSS_SELECTOR, '.textButton.view-account')
-        return btn_element.is_displayed()
-    except NoSuchElementException as e:
-        print(f"error element not found")
+        account_btn = driver_instance.find_elements(By.CSS_SELECTOR, '.textButton.view-account')
+        if len(account_btn) > 0 and account_btn[0].is_displayed():
+            return True
+        return False
+    except Exception:
         return False
 
 # LogIn logic with credentials goes in here:
 def monkey_login(driver_instance: WebDriver):
-    # login with my account on monkeytype.com website
+    # Navigation:
+    driver_instance.get(MONKEYTYPE_LOGIN_URL)
+    # Wait for the site to process the session
+    t.sleep(2)
 
+    login_fields = driver_instance.find_elements(By.NAME, 'current-email')
+
+    # Safety mechanism for redirect
+    if len(login_fields) == 0:
+        print("Safety Check: Login Fields not found. user already logged in")
+        # if driver_instance.current_url == MONKEYTYPE_URL:
+        #     driver_instance.get(MONKEYTYPE_URL)
+        driver_instance.get(MONKEYTYPE_URL)
+        return
+
+    # login with my account on monkeytype.com website
     # this has to be done using auth() later
     # which will handle all the credential logic
+    print("Log In Start: Fields Found logging in...")
     with open('creds.JSON', 'r') as f:
         creds = json.load(f)
     email = creds['email']
     password = creds['password']
 
-    # Login action steps:
-    driver_instance.get(MONKEYTYPE_LOGIN_URL)
 
+    # Login action steps/sequence:
     t.sleep(1)
-    # 1. Locate Fields: find email and password inputs with By.NAME and Sign In button with By.CLASS_NAME
-    email_field = driver_instance.find_element(By.NAME, 'current-email')
+    # 1. Locate Fields:
+    email_field = login_fields[0]
     password_field = driver_instance.find_element(By.NAME, 'current-password')
     sign_in_button = driver_instance.find_element(By.CLASS_NAME, 'signIn')
 
@@ -128,11 +153,87 @@ def restart_test():
 
 # checking for configuration
 def is_configured(driver_instance: WebDriver, obj: TestConfig) -> bool:
-    pass
+    # TEST = TestConfig('time', 30, 'english 1k',100)
+    try:
+        # 1. Check Mode: (time/words)
+        current_mode = driver_instance.find_element(By.CSS_SELECTOR, '#config .mode .button.active').get_attribute('mode')
+        if current_mode != obj.test_type:
+            return False
+
+        # 2. Check Amount (Duration or Word Count)
+        if obj.test_type == 'time':
+            current_time = driver_instance.find_element(By.CSS_SELECTOR, '#config .time .button.active').get_attribute('timeconfig')
+            if current_time != str(obj.amount):
+                return False
+        elif obj.test_type == 'words':
+            current_words = driver_instance.find_element(By.CSS_SELECTOR, '#config .words .button.active').get_attribute('wordcount')
+            if current_words != str(obj.amount):
+                return False
+
+        # 3. Check Toggles (Only when they aren't None state)
+        if obj.punctuation_toggle is not None:
+            punc_active = 'active' in driver_instance.find_element(By.CSS_SELECTOR, '#config .punctuation .button').get_attribute('class')
+            if punc_active != obj.punctuation_toggle:
+                return False
+
+        if obj.numbers_toggle is not None:
+            num_active = 'active' in driver_instance.find_element(By.CSS_SELECTOR, '#config .numbers .button').get_attribute('class')
+            if num_active != obj.numbers_toggle:
+                return False
+
+        current_lang = driver_instance.find_element(By.CSS_SELECTOR, '.group.language .text').text.lower()
+        if current_lang != obj.language.lower():
+            return False
+
+        return True
+    except Exception:
+        return False
 
 # test configuration and applying properties logic go in here
 def configure_test(driver_instance: WebDriver, obj: TestConfig):
-    pass
+    # TEST = TestConfig('time', 30, 'english 1k',100)
+    print("Configuring test Settings...")
+
+    # Set Mode
+    mode_btn = driver_instance.find_element(By.CSS_SELECTOR, f'#config .mode .button[mode="{obj.test_type}"]')
+    if 'active' not in mode_btn.get_attribute('class'):
+        mode_btn.click()
+        t.sleep(0.5)
+
+    if obj.test_type == 'time':
+        selector = f"#config .time .button[timeconfig='{obj.amount}']"
+    else:
+        selector = f"#config .words .button[wordcount='{obj.amount}']"
+
+    amount_btn = driver_instance.find_element(By.CSS_SELECTOR, selector)
+    if 'active' not in amount_btn.get_attribute('class'):
+        amount_btn.click()
+
+    # Set Toggles
+    def handle_toggle(selector_element, target_state):
+        if target_state is None:
+            return
+        btn = driver_instance.find_element(By.CSS_SELECTOR, selector_element)
+        is_active = 'active' in btn.get_attribute('class')
+        if is_active != target_state:
+            btn.click()
+
+    handle_toggle('#config .punctuation .button', obj.punctuation_toggle)
+    handle_toggle('#config .numbers .button', obj.numbers_toggle)
+
+    # Set Language
+    current_lang_element = driver_instance.find_element(By.CSS_SELECTOR, '.group.language .text')
+    if current_lang_element.text.lower() != obj.language.lower():
+        pag.press('esc')
+        t.sleep(0.5)
+        search_input = driver_instance.find_element(By.ID, 'languageSearch')
+        search_input.send_keys(obj.language)
+        t.sleep(0.5)
+        search_input.send_keys(Keys.RETURN)
+        print(f'Language changed to {obj.language}')
+
+    print('Configuration Finished')
+
 
 if __name__ == "__main__":
     # Phase 1: Environment & Session Initialization
@@ -151,7 +252,7 @@ if __name__ == "__main__":
     # It only waits the full 10 seconds if the element is truly missing. (throwing a NoSuchElementException).
     # this is for the is_logged_in element lookup.
     # the login method still needs time.sleep() method to not trigger captcha
-    driver.implicitly_wait(10)
+    driver.implicitly_wait(5)
 
     # Window Maximisation Check: is_maximised returns True if size and position pixels are within relevant buffer ranges
     if not is_maximised(driver):
@@ -168,16 +269,15 @@ if __name__ == "__main__":
 
     # Phase 2: User Authentication - Log In with my account
     if not is_logged_in(driver):
-        print("Log In Start: logging in...")
         monkey_login(driver)
     else:
         print("Log In Status: already logged in")
 
     # Phase 3: Test Configuration
-    if not is_configured(driver, TEST):
-        configure_test(driver, TEST)
-    else:
-        pass
+    # if not is_configured(driver, TEST):
+    #     configure_test(driver, TEST)
+    # else:
+    #     print(f'{TEST} is already configured correctly')
 
     # Phase 4: Word Handling/Processing
     # word_container = driver.find_element(By.ID, "words")

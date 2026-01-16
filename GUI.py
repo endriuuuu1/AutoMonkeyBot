@@ -9,7 +9,9 @@ from bot import session_init
 def crash(process):
     pass
 
-
+# end/quit any process passed in here
+def destroy(process):
+    pass
 
 if __name__ == "__main__":
 
