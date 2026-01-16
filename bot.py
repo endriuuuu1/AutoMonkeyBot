@@ -19,6 +19,7 @@ SIZE_PIXEL_BUFFER: int = 50
 POSITION_PIXEL_BUFFER: int = 12
 CENTER_X = (pag.size().width / 2)
 CENTER_Y = (pag.size().height / 2)
+TEST = TestConfig('time', 30, 'english 1k',100)
 
 # manual debug mode for chrome in Terminal
 # C:\Program Files\Google\Chrome\Application\chrome.exe = Dir Address
@@ -70,7 +71,7 @@ def auth():
     pass
 
 # checking logic for authentification
-def is_logged_in(driver_instance) -> bool:
+def is_logged_in(driver_instance: WebDriver) -> bool:
     try:
         btn_element = driver_instance.find_element(By.CSS_SELECTOR, '.textButton.view-account')
         return btn_element.is_displayed()
@@ -79,7 +80,7 @@ def is_logged_in(driver_instance) -> bool:
         return False
 
 # LogIn logic with credentials goes in here:
-def monkey_login(driver_instance):
+def monkey_login(driver_instance: WebDriver):
     # login with my account on monkeytype.com website
 
     # this has to be done using auth() later
@@ -125,6 +126,13 @@ def restart_test():
     with pag.hold('tab'):
         pag.press('enter')
 
+# checking for configuration
+def is_configured(driver_instance: WebDriver, obj: TestConfig) -> bool:
+    pass
+
+# test configuration and applying properties logic go in here
+def configure_test(driver_instance: WebDriver, obj: TestConfig):
+    pass
 
 if __name__ == "__main__":
     # Phase 1: Environment & Session Initialization
@@ -165,9 +173,18 @@ if __name__ == "__main__":
     else:
         print("Log In Status: already logged in")
 
-    # Phase X: Word handler/parser
+    # Phase 3: Test Configuration
+    if not is_configured(driver, TEST):
+        configure_test(driver, TEST)
+    else:
+        pass
+
+    # Phase 4: Word Handling/Processing
     # word_container = driver.find_element(By.ID, "words")
     # word_elements = word_container.find_elements(By.CLASS_NAME, "word")
-    #
     # for w in word_elements:
-    #     print(f"word: {w.text.lower()} + index: {word_elements.index(w)}")
+    #     print(f"word: {w.text.lower()} + index: {word_elements.index(w)} + first letter: {w.text[0]}")
+
+
+    # Phase 5: Execution
+    # Phase 6: Results

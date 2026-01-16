@@ -1,5 +1,7 @@
+# I should probably look more into DATACLASSES (@dataclass) but for now this class will do.
 
 
+# Test Configuration class to define all properties for tests
 class TestConfig:
 
     test_type_list: list = ['time', 'words', 'custom']
@@ -54,11 +56,35 @@ class TestConfig:
 
         return output
 
+    # apply @property decorator to access the variable values from outside the class
+    @property
+    def test_type(self):
+        return self._type
+    @property
+    def duration(self):
+        return self._duration
+    @property
+    def language(self):
+        return self._language
+    @property
+    def wpm(self):
+        return self._wpm
+    @property
+    def punctuation_toggle(self):
+        return self._punctuation_toggle
+    @property
+    def numbers_toggle(self):
+        return self._numbers_toggle
+
 
 if __name__ == "__main__":
 
     obj = TestConfig('words', 30,'english 1k',150)
     obj2 = TestConfig('time', 30, 'english 5k', 323,True,True)
 
+    print(f"{obj.test_type}\n{obj.duration}\n{obj.language}\n{obj.wpm}\n{obj.punctuation_toggle}\n{obj.numbers_toggle}")
     print(obj)
+
+    print(f"{obj2.test_type}\n{obj2.duration}\n{obj2.language}\n{obj2.wpm}\n{obj2.punctuation_toggle}\n{obj2.numbers_toggle}")
     print(obj2)
+
